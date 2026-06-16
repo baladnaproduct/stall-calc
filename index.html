@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Stall Calculator</title>
+<style>
+  :root{
+    --bg:#FAF7F0; --ink:#1B1B1B; --muted:#6B6356; --line:#D9D2C3;
+    --card:#FFFFFF; --green:#0B6E4F; --green-dark:#08533B;
+    --amber:#B45309; --red:#B3261E; --chip:#EFEAE0;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+  body{padding:env(safe-area-inset-top) 14px calc(env(safe-area-inset-bottom) + 90px) 14px; max-width:520px; margin:0 auto;}
+  h1{font-size:20px; font-weight:800; letter-spacing:-0.3px; margin:14px 2px 2px;}
+  .sub{color:var(--muted); font-size:13px; margin:0 2px 14px;}
+  .tabs{display:flex; gap:8px; margin-bottom:14px;}
+  .tab{flex:1; padding:12px 0; border-radius:12px; border:2px solid var(--line);
+    background:var(--card); font-size:16px; font-weight:700; color:var(--muted);}
+  .tab.active{border-color:var(--ink); color:var(--ink);}
+  .panel{background:var(--card); border:1.5px solid var(--line); border-radius:16px; padding:14px; margin-bottom:14px;}
+  .panel h2{font-size:13px; font-weight:800; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin:0 0 10px;}
+  label{font-size:14px; font-weight:600;}
+  input[type=text]{font-size:22px; font-weight:700; padding:12px; width:100%;
+    border:2px solid var(--line); border-radius:12px; background:#FFFDF8; color:var(--ink);
+    font-variant-numeric:tabular-nums;}
+  input[type=text]:focus{outline:none; border-color:var(--ink);}
+  .row{display:flex; gap:10px; align-items:center;}
+  .grow{flex:1;}
+  button{font-family:inherit; cursor:pointer;}
+  .big-btn{width:100%; padding:16px; font-size:17px; font-weight:800; border-radius:14px; border:none; color:#fff;}
+  .btn-tax{background:var(--amber);}
+  .btn-notax{background:#4B5563;}
+  .btn-green{background:var(--green);}
+  .btn-ghost{background:transparent; border:2px solid var(--line); color:var(--ink); font-weight:700;}
+  .items li{display:flex; align-items:center; gap:10px; padding:10px 2px; border-bottom:1px dashed var(--line);
+    font-size:17px; font-weight:600; font-variant-numeric:tabular-nums;}
+  .items{list-style:none; margin:8px 0 0; padding:0;}
+  .pill{font-size:11px; font-weight:800; padding:3px 8px; border-radius:99px; text-transform:uppercase; letter-spacing:0.05em;}
+  .pill.t{background:#FDEBD2; color:var(--amber);}
+  .pill.n{background:#E5E7EB; color:#4B5563;}
+  .del{margin-left:auto; background:none; border:none; color:var(--red); font-size:22px; font-weight:700; padding:0 6px;}
+  .chips{display:flex; flex-wrap:wrap; gap:8px;}
+  .chip{padding:12px 16px; border-radius:99px; border:2px solid var(--line); background:var(--chip);
+    font-size:15px; font-weight:700; color:var(--ink);}
+  .payrow{border:1.5px solid var(--line); border-radius:12px; padding:10px; margin-top:10px;}
+  .payrow .head{display:flex; align-items:center; gap:8px; margin-bottom:8px;}
+  .payrow .head b{font-size:16px;}
+  .mini{font-size:12px; color:var(--muted);}
+  .rest{border:none; background:var(--ink); color:#fff; font-weight:700; border-radius:10px; padding:10px 14px; font-size:14px;}
+  .breakline{display:flex; justify-content:space-between; font-size:14px; padding:3px 0; font-variant-numeric:tabular-nums;}
+  .breakline.total{font-size:17px; font-weight:800; border-top:1.5px solid var(--line); margin-top:6px; padding-top:8px;}
+  .warn{color:var(--red); font-weight:700; font-size:14px; margin-top:8px;}
+  .collect{position:fixed; left:0; right:0; bottom:0; background:var(--green); color:#fff;
+    padding:14px 18px calc(14px + env(safe-area-inset-bottom)); display:flex; align-items:center; justify-content:space-between;
+    max-width:520px; margin:0 auto;}
+  .collect .lbl{font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; opacity:0.85;}
+  .collect .amt{font-size:34px; font-weight:900; font-variant-numeric:tabular-nums; letter-spacing:-0.5px;}
+  .setrow{display:flex; align-items:center; gap:10px; padding:12px 0; border-bottom:1px dashed var(--line);}
+  .setrow:last-child{border-bottom:none;}
+  .setrow b{width:84px; font-size:16px;}
+  .toggle{width:54px; height:32px; border-radius:99px; border:none; background:#D1CBBC; position:relative; flex-shrink:0;}
+  .toggle.on{background:var(--green);}
+  .toggle::after{content:""; position:absolute; top:3px; left:3px; width:26px; height:26px; border-radius:50%; background:#fff; transition:left .15s;}
+  .toggle.on::after{left:25px;}
+  .toggle-lbl{font-size:11px; color:var(--muted); width:54px; text-align:center; margin-top:2px;}
+  .fee-in{width:90px !important; font-size:17px !important; padding:8px !important; text-align:right;}
+  .subtotals{display:flex; gap:14px; margin-top:10px; font-size:13px; color:var(--muted); font-weight:600;}
+  .hidden{display:none;}
+</style>
+</head>
+<body>
+
+<h1>Stall Calculator</h1>
+<p class="sub">Offline price, tax &amp; fee calculator</p>
+
+<div class="tabs">
+  <button class="tab active" id="tabSell" onclick="showView('sell')">Sell</button>
+  <button class="tab" id="tabSetup" onclick="showView('setup')">Setup</button>
+</div>
+
+<!-- ============ SETUP VIEW ============ -->
+<div id="viewSetup" class="hidden">
+  <div class="panel">
+    <h2>Sales tax for this location</h2>
+    <div class="row">
+      <input type="text" inputmode="decimal" id="taxRate" placeholder="0" onchange="saveSettings()" style="text-align:right;">
+      <span style="font-size:22px; font-weight:800;">%</span>
+    </div>
+    <p class="mini" style="margin:8px 0 0;">Change this before each event.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Payment methods</h2>
+    <p class="mini" style="margin:0 0 4px;">For each method: does sales tax apply, and what extra fee (%) do you add?</p>
+    <div id="methodRows"></div>
+  </div>
+</div>
+
+<!-- ============ SELL VIEW ============ -->
+<div id="viewSell">
+  <div class="panel">
+    <h2>1 · Items</h2>
+    <input type="text" inputmode="decimal" id="priceIn" placeholder="Item price">
+    <div class="row" style="margin-top:10px;">
+      <button class="big-btn btn-tax grow" onclick="addItem(true)">+ Taxable</button>
+      <button class="big-btn btn-notax grow" onclick="addItem(false)">+ No tax</button>
+    </div>
+    <ul class="items" id="itemList"></ul>
+    <div class="subtotals" id="subtotals"></div>
+  </div>
+
+  <div class="panel">
+    <h2>2 · How is the customer paying?</h2>
+    <p class="mini" style="margin:0 0 8px;">Tap a method. For split payments, tap two or more and set how much of the price each one covers.</p>
+    <div class="chips" id="payChips"></div>
+    <div id="payRows"></div>
+    <div id="payWarn"></div>
+  </div>
+
+  <div class="panel">
+    <h2>3 · Breakdown</h2>
+    <div id="breakdown"><p class="mini">Add items and pick a payment method.</p></div>
+  </div>
+
+  <button class="big-btn btn-ghost" onclick="newSale()">Clear — new sale</button>
+</div>
+
+<div class="collect">
+  <span class="lbl">Collect</span>
+  <span class="amt" id="collectAmt">$0.00</span>
+</div>
+
+<script>
+// ---------- storage (works offline; falls back to memory) ----------
+var mem = {};
+function store(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){ mem[k]=v; } }
+function load(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return (k in mem)?mem[k]:d; } }
+
+// ---------- state ----------
+var settings = load('stall_settings', {
+  taxRate: 0,
+  methods: [
+    {id:'cash',   name:'Cash',     taxed:false, fee:0},
+    {id:'card',   name:'Card',     taxed:true,  fee:3},
+    {id:'zelle',  name:'Zelle',    taxed:true,  fee:0},
+    {id:'venmo',  name:'Venmo',    taxed:true,  fee:0},
+    {id:'cashapp',name:'Cash App', taxed:true,  fee:0}
+  ]
+});
+var items = [];      // {price, taxable}
+var payments = [];   // {methodId, base}
+
+// ---------- helpers ----------
+function $(id){ return document.getElementById(id); }
+function money(n){ return '$' + (Math.round(n*100)/100).toFixed(2); }
+function num(v){ var n=parseFloat(String(v).replace(/[^0-9.]/g,'')); return isNaN(n)?0:n; }
+function baseTotal(){ var s=0; for(var i=0;i<items.length;i++) s+=items[i].price; return s; }
+function taxableTotal(){ var s=0; for(var i=0;i<items.length;i++) if(items[i].taxable) s+=items[i].price; return s; }
+function methodById(id){ for(var i=0;i<settings.methods.length;i++) if(settings.methods[i].id===id) return settings.methods[i]; return null; }
+
+// ---------- views ----------
+function showView(v){
+  $('viewSell').className = v==='sell' ? '' : 'hidden';
+  $('viewSetup').className = v==='setup' ? '' : 'hidden';
+  $('tabSell').className = 'tab' + (v==='sell'?' active':'');
+  $('tabSetup').className = 'tab' + (v==='setup'?' active':'');
+}
+
+// ---------- setup ----------
+function renderSetup(){
+  $('taxRate').value = settings.taxRate || '';
+  var html = '';
+  for(var i=0;i<settings.methods.length;i++){
+    var m = settings.methods[i];
+    html += '<div class="setrow">'
+      + '<b>'+m.name+'</b>'
+      + '<div><button class="toggle'+(m.taxed?' on':'')+'" onclick="toggleTax('+i+')"></button>'
+      + '<div class="toggle-lbl">'+(m.taxed?'tax on':'no tax')+'</div></div>'
+      + '<span class="grow"></span>'
+      + '<input type="text" inputmode="decimal" class="fee-in" value="'+m.fee+'" onchange="setFee('+i+',this.value)">'
+      + '<span style="font-weight:800;">% fee</span>'
+      + '</div>';
+  }
+  $('methodRows').innerHTML = html;
+}
+function toggleTax(i){ settings.methods[i].taxed = !settings.methods[i].taxed; saveSettings(); }
+function setFee(i,v){ settings.methods[i].fee = num(v); saveSettings(); }
+function saveSettings(){
+  settings.taxRate = num($('taxRate').value);
+  store('stall_settings', settings);
+  renderSetup(); renderSell();
+}
+
+// ---------- sell: items ----------
+function addItem(taxable){
+  var p = num($('priceIn').value);
+  if(p<=0) return;
+  items.push({price:p, taxable:taxable});
+  $('priceIn').value=''; $('priceIn').focus();
+  autoFillSingle(); renderSell();
+}
+function delItem(i){ items.splice(i,1); autoFillSingle(); renderSell(); }
+
+// ---------- sell: payments ----------
+function togglePay(id){
+  var idx=-1;
+  for(var i=0;i<payments.length;i++) if(payments[i].methodId===id) idx=i;
+  if(idx>=0){ payments.splice(idx,1); }
+  else { payments.push({methodId:id, base:0}); }
+  autoFillSingle();
+  if(payments.length===2 && payments[0].base===baseTotal()){ payments[0].base=0; } // user is splitting: let them type
+  renderSell();
+}
+function autoFillSingle(){
+  if(payments.length===1){ payments[0].base = baseTotal(); }
+}
+function setPayBase(i,v){ payments[i].base = num(v); renderSell(); }
+function fillRest(i){
+  var others=0;
+  for(var j=0;j<payments.length;j++) if(j!==i) others+=payments[j].base;
+  payments[i].base = Math.max(0, Math.round((baseTotal()-others)*100)/100);
+  renderSell();
+}
+function newSale(){ items=[]; payments=[]; $('priceIn').value=''; renderSell(); }
+
+// ---------- math ----------
+function computeLines(){
+  var bt = baseTotal();
+  var share = bt>0 ? taxableTotal()/bt : 0;
+  var lines = [];
+  for(var i=0;i<payments.length;i++){
+    var p = payments[i], m = methodById(p.methodId);
+    var tax = m.taxed ? p.base*share*(settings.taxRate/100) : 0;
+    var fee = (p.base+tax)*(m.fee/100);
+    lines.push({name:m.name, base:p.base, tax:tax, fee:fee, collect:p.base+tax+fee});
+  }
+  return lines;
+}
+
+// ---------- render sell ----------
+function renderSell(){
+  // items
+  var html='';
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    html += '<li>'+money(it.price)
+      + '<span class="pill '+(it.taxable?'t':'n')+'">'+(it.taxable?'Tax':'No tax')+'</span>'
+      + '<button class="del" onclick="delItem('+i+')">&times;</button></li>';
+  }
+  $('itemList').innerHTML = html;
+  $('subtotals').innerHTML = items.length
+    ? '<span>Taxable: '+money(taxableTotal())+'</span><span>No tax: '+money(baseTotal()-taxableTotal())+'</span><span><b style="color:var(--ink)">Price total: '+money(baseTotal())+'</b></span>'
+    : '';
+
+  // chips
+  var chips='';
+  for(var c=0;c<settings.methods.length;c++){
+    var m=settings.methods[c], on=false;
+    for(var k=0;k<payments.length;k++) if(payments[k].methodId===m.id) on=true;
+    chips += '<button class="chip" style="'+(on?'border-color:var(--green);background:#E3F2EB;color:var(--green-dark);':'')+'" onclick="togglePay(\''+m.id+'\')">'+m.name+(on?' ✓':'')+'</button>';
+  }
+  $('payChips').innerHTML = chips;
+
+  // payment rows (only when splitting)
+  var rows='';
+  if(payments.length>1){
+    for(var r=0;r<payments.length;r++){
+      var pm = methodById(payments[r].methodId);
+      rows += '<div class="payrow"><div class="head"><b>'+pm.name+'</b>'
+        + '<span class="mini">part of the price paid this way</span></div>'
+        + '<div class="row"><input type="text" inputmode="decimal" value="'+(payments[r].base||'')+'" placeholder="0" onchange="setPayBase('+r+',this.value)">'
+        + '<button class="rest" onclick="fillRest('+r+')">Rest</button></div></div>';
+    }
+  }
+  $('payRows').innerHTML = rows;
+
+  // warning if split doesn't add up
+  var assigned=0;
+  for(var a=0;a<payments.length;a++) assigned+=payments[a].base;
+  assigned = Math.round(assigned*100)/100;
+  var bt = Math.round(baseTotal()*100)/100;
+  var warn='';
+  if(payments.length>0 && items.length>0 && assigned!==bt){
+    var diff = Math.round((bt-assigned)*100)/100;
+    warn = '<p class="warn">'+(diff>0 ? money(diff)+' of the price is not assigned yet.' : 'Assigned '+money(-diff)+' more than the price total.')+'</p>';
+  }
+  $('payWarn').innerHTML = warn;
+
+  // breakdown + collect
+  var lines = computeLines(), grand=0, bd='';
+  if(items.length && payments.length){
+    for(var L=0;L<lines.length;L++){
+      var ln=lines[L]; grand+=ln.collect;
+      bd += '<div style="margin-bottom:8px;">'
+        + '<div class="breakline"><b>'+ln.name+'</b><b>'+money(ln.collect)+'</b></div>'
+        + '<div class="breakline mini"><span>Price part</span><span>'+money(ln.base)+'</span></div>'
+        + (ln.tax>0 ? '<div class="breakline mini"><span>+ Sales tax ('+settings.taxRate+'%)</span><span>'+money(ln.tax)+'</span></div>' : '<div class="breakline mini"><span>+ Sales tax</span><span>none</span></div>')
+        + (ln.fee>0 ? '<div class="breakline mini"><span>+ Fee</span><span>'+money(ln.fee)+'</span></div>' : '')
+        + '</div>';
+    }
+    bd += '<div class="breakline total"><span>Total to collect</span><span>'+money(grand)+'</span></div>';
+  } else {
+    bd = '<p class="mini">Add items and pick a payment method.</p>';
+  }
+  $('breakdown').innerHTML = bd;
+  $('collectAmt').textContent = money(grand);
+}
+
+// ---------- init ----------
+renderSetup();
+renderSell();
+</script>
+</body>
+</html>
