@@ -142,16 +142,23 @@ function store(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){
 function load(k,d){ try{ var v=localStorage.getItem(k); return v?JSON.parse(v):d; }catch(e){ return (k in mem)?mem[k]:d; } }
 
 // ---------- state ----------
-var settings = load('stall_settings', {
+var SCHEMA = 2; // bump this if the method list changes
+var DEFAULTS = {
+  schema: SCHEMA,
   taxRate: 0,
   methods: [
-    {id:'cash',   name:'Cash',     taxed:false, fee:0},
-    {id:'card',   name:'Card',     taxed:true,  fee:3},
-    {id:'zelle',  name:'Zelle',    taxed:true,  fee:0},
-    {id:'venmo',  name:'Venmo',    taxed:true,  fee:0},
-    {id:'cashapp',name:'Cash App', taxed:true,  fee:0}
+    {id:'card',   name:'Card',   taxed:true,  fee:3},
+    {id:'others', name:'Others', taxed:false, fee:0}
   ]
-});
+};
+var settings = load('stall_settings', DEFAULTS);
+// if an older saved version exists, refresh the payment options (keep the tax rate)
+if(settings.schema !== SCHEMA){
+  var keepRate = settings.taxRate || 0;
+  settings = JSON.parse(JSON.stringify(DEFAULTS));
+  settings.taxRate = keepRate;
+  store('stall_settings', settings);
+}
 var items = [];      // {price, taxable}
 var payments = [];   // {methodId, base}
 
